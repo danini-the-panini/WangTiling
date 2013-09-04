@@ -31,11 +31,20 @@ public class WangTiling extends JPanel
     
     int[] f = {12,13,15,14, 0, 1, 3, 2, 8, 9,11,10, 4, 5, 7, 6};
     
+    int up = 0;
+    int dn = 1;
+    int lt = 2;
+    int rt = 3;
+    
     int[][] dir = {
         {-1,0},
         {1,0},
         {0,-1},
         {0,1}
+    };
+    
+    int[] o = {
+        1,0,3,2
     };
     
     int[][] tiles;
@@ -44,6 +53,7 @@ public class WangTiling extends JPanel
 
     public WangTiling(String tex)
     {
+        seed = System.currentTimeMillis();
         try
         {
             test = ImageIO.read(new File(tex));
@@ -68,21 +78,21 @@ public class WangTiling extends JPanel
         {
             for (int j = 0; j < tiles[i].length; j++)
             {
-                int x = get(i,j);
+                int x = calc(i,j);
                 tiles[i][j] = x;
-                int[] p = p(x);
+                int[] p = pnt(x);
                 g.drawImage(test, j*w, i*h, j*w+w, i*h+h, p[0]*w, p[1]*h, p[0]*w+w, p[1]*h+h, this);
-                //g.drawRect(j*w, i*h, w, h);
+                g.drawRect(j*w, i*h, w, h);
             }
         }
     }
     
-    public int[] p(int x)
+    public int[] pnt(int x)
     {
         return new int[]{x % 4, x / 4};
     }
     
-    public int get(int i, int j)
+    public int calc(int i, int j)
     {
         int z = 0;
         for (int d = 0; d < 4; d++)
