@@ -94,12 +94,35 @@ public class WangTiling extends JPanel
     
     public int calc(int i, int j)
     {
-        int z = 0;
+        int z;
+        do
+        {
+            z = 0;
+            for (int d = 0; d < 4; d++)
+            {
+                z |= g(i,j,d) << (3-d);
+            }
+        }
+        while (bad(i,j,f[z]));
+        return f[z];
+    }
+    
+    public boolean bad(int i, int j, int x)
+    {
         for (int d = 0; d < 4; d++)
         {
-            z |= g(i,j,d) << (3-d);
+            if (get(i,j,dir[d]) == x) return true;
+            if (get(i,j,add(dir[d],dir[(d+2)%4])) == x) return true;
         }
-        return f[z];
+        return false;
+    }
+    
+    public int[] add(int[] a, int[] b)
+    {
+        int[] c = new int[a.length];
+        for (int i = 0; i < a.length; i++)
+            c[i] = a[i] + b[i];
+        return c;
     }
     
     public int wrap(int a, int b)
