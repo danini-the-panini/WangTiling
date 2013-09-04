@@ -46,11 +46,11 @@ public class WangTiling extends JPanel
     
     Random random;
 
-    public WangTiling()
+    public WangTiling(String tex)
     {
         try
         {
-            test = ImageIO.read(new File("poe.png"));
+            test = ImageIO.read(new File(tex));
             w = test.getWidth()/4;
             h = test.getHeight()/4;
         }
@@ -133,7 +133,7 @@ public class WangTiling extends JPanel
     public static void main(String[] args)
     {
         JFrame frame = new JFrame("Wang!");
-        frame.add(new WangTiling());
+        frame.add(new WangTiling(args.length > 1 ? args[0] : "test.png"));
         frame.setSize(500, 500);
         frame.setVisible(true);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
