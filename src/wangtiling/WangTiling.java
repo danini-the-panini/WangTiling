@@ -16,6 +16,7 @@ import java.awt.dnd.DropTargetAdapter;
 import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.io.IOException;
 import java.util.Random;
@@ -60,6 +61,14 @@ public class WangTiling extends JPanel
     int DOWN = 1;
     int LEFT = 2;
     int RIGHT = 3;
+    float seamWidth = 3f;
+    boolean seamsVisible = false;
+    float[][] seams = {
+       {0,1,1,1},
+       {0,0,1,0},
+       {1,0,1,1},
+       {0,0,0,1}
+    };
     int[][] directions =
     {
         {
@@ -102,7 +111,7 @@ public class WangTiling extends JPanel
             @Override
             public void mouseClicked(MouseEvent e)
             {
-                seed = System.currentTimeMillis();
+                seamsVisible = !seamsVisible;
                 repaint();
             }
         });
@@ -147,11 +156,13 @@ public class WangTiling extends JPanel
         g.setBackground(Color.WHITE);
         g.clearRect(0, 0, getWidth(), getHeight());
         
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setRenderingHint(
+            RenderingHints.KEY_ANTIALIASING,
+            RenderingHints.VALUE_ANTIALIAS_ON);
         
+        // draw drop text if no texture is loaded
         g.setFont(FONT);
         g.setColor(Color.GRAY);
-        
         if (tex == null)
         {
             int stringWidth = g.getFontMetrics().stringWidth(MESSAGE);
@@ -164,13 +175,19 @@ public class WangTiling extends JPanel
                     getWidth()/2 - stringWidth/2,
                     getHeight()/2 -stringHeight/2 + 25);
             
-            g.setStroke(new BasicStroke(2, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 0, new float[]{5,5}, 1));
+            g.setStroke(new BasicStroke(2, BasicStroke.CAP_BUTT,
+                BasicStroke.JOIN_ROUND, 0, new float[]{5,5}, 1));
             
-            g.drawRoundRect(getWidth()/2 - boxWidth/2,
-                    getHeight()/2 -boxHeight/2, boxWidth, boxHeight, DRAG_BOX_SIZE, DRAG_BOX_SIZE);
+            g.drawRoundRect(getWidth()/2 - boxWidth/2, getHeight()/2
+                -boxHeight/2, boxWidth, boxHeight, DRAG_BOX_SIZE,
+                DRAG_BOX_SIZE);
             
             return;
         }
+        
+        g.setRenderingHint( RenderingHints.KEY_ANTIALIASING,
+            RenderingHints.VALUE_ANTIALIAS_OFF);
+        g.setStroke(new BasicStroke(seamWidth));
         
         random = new Random(seed);
         tiles = new int[getHeight() / tileH + 1][getWidth() / tileW + 1];
@@ -188,7 +205,22 @@ public class WangTiling extends JPanel
                 int x = wang(i, j);
                 tiles[i][j] = x;
                 int[] p = indexToPoint(x);
-                g.drawImage(tex, j * tileW, i * tileH, j * tileW + tileW, i * tileH + tileH, p[0] * tileW, p[1] * tileH, p[0] * tileW + tileW, p[1] * tileH + tileH, this);
+                int rx = j * tileW, ry = i * tileH;
+                g.drawImage(tex, rx, ry, rx + tileW, ry + tileH, p[0] * tileW, p[1] * tileH, p[0] * tileW + tileW, p[1] * tileH + tileH, this);
+                
+                if (seamsVisible)
+                {
+                    for (int d = 0; d < 4; d++)
+                    {
+                        Color c = borders[d][x] == 0 ? Color.RED : Color.BLUE;
+                        g.setColor(c);
+                        g.drawLine(
+                            (int)(rx + seams[d][0]*tileW),
+                            (int)(ry + seams[d][1]*tileH),
+                            (int)(rx + seams[d][2]*tileW),
+                            (int)(ry + seams[d][3]*tileH));
+                    }
+                }
             }
         }
     }
@@ -331,6 +363,7 @@ public class WangTiling extends JPanel
             return;
         }
         tex = newTex;
+        seed = System.currentTimeMillis();
         tileW = tex.getWidth(this) / 4;
         tileH = tex.getHeight(this) / 4;
     }

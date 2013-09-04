@@ -1,14 +1,14 @@
 WANG TILING!
 ============
 
-This is an implementation of "Wang Tiling" in Java 2D.
+This is an implementation of "Wang Tiling" in Java 2D. It's meant as an aid for texture artists to test their tile-based textures simply and easily.
 
 Usage
 -----
 
 Run it (ant run, or through netbeans) and just drag an image file into the window, it's that easy!
 
-Clicking in the window re-tiles (or randomises) the texture.
+Clicking on the window toggles visibility of coloured seams.
 
 You will also find the following example tile-based textures:
 
