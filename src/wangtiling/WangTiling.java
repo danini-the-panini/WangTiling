@@ -1,6 +1,8 @@
 package wangtiling;
 
 import java.awt.Graphics;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -43,6 +45,13 @@ public class WangTiling extends JPanel
         {0,1}
     };
     
+    int[][] diag = {
+        {-1,-1},
+        {-1,1},
+        {1,1},
+        {1,-1}
+    };
+    
     int[] o = {
         1,0,3,2
     };
@@ -64,6 +73,17 @@ public class WangTiling extends JPanel
         {
             ex.printStackTrace(System.err);
         }
+        
+        addMouseListener(new MouseAdapter() {
+
+            @Override
+            public void mouseClicked(MouseEvent e)
+            {
+                seed = System.currentTimeMillis();
+                repaint();
+            }
+            
+        });
     }
 
     @Override
@@ -82,7 +102,7 @@ public class WangTiling extends JPanel
                 tiles[i][j] = x;
                 int[] p = pnt(x);
                 g.drawImage(test, j*w, i*h, j*w+w, i*h+h, p[0]*w, p[1]*h, p[0]*w+w, p[1]*h+h, this);
-                g.drawRect(j*w, i*h, w, h);
+                //g.drawRect(j*w, i*h, w, h);
             }
         }
     }
@@ -112,17 +132,9 @@ public class WangTiling extends JPanel
         for (int d = 0; d < 4; d++)
         {
             if (get(i,j,dir[d]) == x) return true;
-            if (get(i,j,add(dir[d],dir[(d+2)%4])) == x) return true;
+            if (get(i,j,diag[d]) == x) return true;
         }
         return false;
-    }
-    
-    public int[] add(int[] a, int[] b)
-    {
-        int[] c = new int[a.length];
-        for (int i = 0; i < a.length; i++)
-            c[i] = a[i] + b[i];
-        return c;
     }
     
     public int wrap(int a, int b)
