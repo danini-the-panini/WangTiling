@@ -26,29 +26,20 @@ public class WangTiling extends JPanel
     
     long seed;
     
-    int[][] f = {
-        { 0, 1,12,13},
-        { 2, 3,13,14},
-        { 4, 5, 8, 9},
-        { 6, 7,10,11}
-    };
-    
-    int[] g = {0,0,1,1,2,2,3,3,2,2,3,3,0,0,1,1};
-    
     int[][] border = {
-        {0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0},
         {1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0},
-        {0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1},
-        {0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0}
+        {0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0},
+        {0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0},
+        {0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1}
     };
     
-    int[] z = {12,13,15,14, 0, 1, 3, 2, 8, 9,11,10, 4, 5, 7, 6};
+    int[] f = {12,13,15,14, 0, 1, 3, 2, 8, 9,11,10, 4, 5, 7, 6};
     
     int[][] dir = {
-        {1,0},
         {-1,0},
-        {0,1},
-        {0,-1}
+        {1,0},
+        {0,-1},
+        {0,1}
     };
     
     int[][] tiles;
@@ -59,10 +50,9 @@ public class WangTiling extends JPanel
     {
         try
         {
-            test = ImageIO.read(new File("test.png"));
+            test = ImageIO.read(new File("poe.png"));
             w = test.getWidth()/4;
             h = test.getHeight()/4;
-            seams = ImageIO.read(new File("seams.png"));
         }
         catch (IOException ex)
         {
@@ -73,7 +63,7 @@ public class WangTiling extends JPanel
     @Override
     public void paint(Graphics g)
     {
-        random = new Random(seed);
+        random = new Random();
         tiles = new int[getHeight()/h+1][getWidth()/w+1];
         for (int i = 0; i < tiles.length; i++)
             for (int j = 0; j < tiles[i].length; j++)
@@ -85,7 +75,8 @@ public class WangTiling extends JPanel
                 int x = get(i,j);
                 tiles[i][j] = x;
                 int[] p = p(x);
-                g.drawImage(seams, j*w, i*h, j*w+w, i*h+h, p[0]*w, p[1]*h, p[0]*w+w, p[1]*h+h, this);
+                g.drawImage(test, j*w, i*h, j*w+w, i*h+h, p[0]*w, p[1]*h, p[0]*w+w, p[1]*h+h, this);
+                //g.drawRect(j*w, i*h, w, h);
             }
         }
     }
@@ -99,20 +90,29 @@ public class WangTiling extends JPanel
     {
         int z = 0;
         for (int d = 0; d < 4; d++)
+        {
             z |= g(i,j,d) << (3-d);
-        return this.z[z];
+        }
+        return f[z];
     }
     
-    public int wrap(int x, int y)
+    public int wrap(int a, int b)
     {
-        if (x >= y) return x % y;
-        if (x < 0) return x + y;
-        return x;
+        if (a >= b) return a % b;
+        if (a < 0) return a + b;
+        return a;
     }
     
     public int get(int i, int j, int[] dir)
     {
-        return tiles[wrap(i+dir[0],tiles.length)][wrap(j+dir[1],tiles[0].length)];
+        try
+        {
+            return tiles[i+dir[0]][j+dir[1]];
+        }
+        catch (ArrayIndexOutOfBoundsException ex)
+        {
+            return -1;
+        }
     }
     
     public int g(int i, int j, int d)
@@ -124,7 +124,7 @@ public class WangTiling extends JPanel
     
     public int p()
     {
-        return random.nextBoolean() ? 1 : 0;
+        return random.nextInt(2);
     }
 
     /**
