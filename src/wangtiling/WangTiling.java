@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.Random;
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 /**
@@ -31,6 +32,7 @@ public class WangTiling extends JPanel
 {
     public static final Font FONT = new Font("Segoe UI", Font.PLAIN, 24);
     public static final String MESSAGE = "Drag an image here";
+    public static final int DRAG_BOX_SIZE = 50;
 
     Image tex = null;
     int tileW, tileH;
@@ -129,7 +131,7 @@ public class WangTiling extends JPanel
                     }
                 } catch (UnsupportedFlavorException | IOException ex)
                 {
-                    ex.printStackTrace(System.err);
+                    error("Error loading file: " + ex.getMessage());
                 }
             }
         });
@@ -155,17 +157,17 @@ public class WangTiling extends JPanel
             int stringWidth = g.getFontMetrics().stringWidth(MESSAGE);
             int stringHeight =  g.getFontMetrics().getHeight();
             
-            int boxWidth = stringWidth + 50;
-            int boxHeight = stringHeight + 50;
+            int boxWidth = stringWidth + DRAG_BOX_SIZE;
+            int boxHeight = stringHeight + DRAG_BOX_SIZE;
             
             g.drawString(MESSAGE,
                     getWidth()/2 - stringWidth/2,
-                    getHeight()/2 -stringHeight/2 + 20);
+                    getHeight()/2 -stringHeight/2 + 25);
             
             g.setStroke(new BasicStroke(2, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 0, new float[]{5,5}, 1));
             
             g.drawRoundRect(getWidth()/2 - boxWidth/2,
-                    getHeight()/2 -boxHeight/2, boxWidth, boxHeight, 50, 50);
+                    getHeight()/2 -boxHeight/2, boxWidth, boxHeight, DRAG_BOX_SIZE, DRAG_BOX_SIZE);
             
             return;
         }
@@ -187,7 +189,6 @@ public class WangTiling extends JPanel
                 tiles[i][j] = x;
                 int[] p = indexToPoint(x);
                 g.drawImage(tex, j * tileW, i * tileH, j * tileW + tileW, i * tileH + tileH, p[0] * tileW, p[1] * tileH, p[0] * tileW + tileW, p[1] * tileH + tileH, this);
-                //g.drawRect(j*w, i*h, w, h);
             }
         }
     }
@@ -326,11 +327,16 @@ public class WangTiling extends JPanel
         Image newTex = ImageIO.read(new File(fileName));
         if (newTex == null)
         {
-            System.err.println("That is not an image!");
+            error("That is not an image!");
             return;
         }
         tex = newTex;
         tileW = tex.getWidth(this) / 4;
         tileH = tex.getHeight(this) / 4;
+    }
+
+    private void error(String message)
+    {
+        JOptionPane.showMessageDialog(this, message, "Error!", JOptionPane.ERROR_MESSAGE);
     }
 }
