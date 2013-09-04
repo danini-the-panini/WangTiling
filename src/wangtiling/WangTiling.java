@@ -1,9 +1,9 @@
 package wangtiling;
 
 import java.awt.Graphics;
+import java.awt.Image;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.Random;
@@ -17,72 +17,87 @@ import javax.swing.JPanel;
  */
 public class WangTiling extends JPanel
 {
-    BufferedImage test;
-    BufferedImage seams;
-    
-    int w, h;
-    
+
+    Image tex;
+    int tileW, tileH;
     long seed;
-    
-    int[][] border = {
-        {1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0},
-        {0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0},
-        {0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0},
-        {0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1}
+    int[][] borders =
+    {
+        {
+            1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0
+        },
+        {
+            0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0
+        },
+        {
+            0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0
+        },
+        {
+            0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1
+        }
     };
-    
-    int[] f = {12,13,15,14, 0, 1, 3, 2, 8, 9,11,10, 4, 5, 7, 6};
-    
-    int up = 0;
-    int dn = 1;
-    int lt = 2;
-    int rt = 3;
-    
-    int[][] dir = {
-        {-1,0},
-        {1,0},
-        {0,-1},
-        {0,1}
+    int[] hash =
+    {
+        12, 13, 15, 14, 0, 1, 3, 2, 8, 9, 11, 10, 4, 5, 7, 6
     };
-    
-    int[][] diag = {
-        {-1,-1},
-        {-1,1},
-        {1,1},
-        {1,-1}
+    int UP = 0;
+    int DOWN = 1;
+    int LEFT = 2;
+    int RIGHT = 3;
+    int[][] directions =
+    {
+        {
+            -1, 0
+        },
+        {
+            1, 0
+        },
+        {
+            0, -1
+        },
+        {
+            0, 1
+        }
     };
-    
-    int[] o = {
-        1,0,3,2
+    int[][] diag =
+    {
+        {
+            -1, -1
+        },
+        {
+            -1, 1
+        },
+        {
+            1, 1
+        },
+        {
+            1, -1
+        }
     };
-    
     int[][] tiles;
-    
     Random random;
 
-    public WangTiling(String tex)
+    public WangTiling(String fileName)
     {
         seed = System.currentTimeMillis();
         try
         {
-            test = ImageIO.read(new File(tex));
-            w = test.getWidth()/4;
-            h = test.getHeight()/4;
-        }
-        catch (IOException ex)
+            this.tex = ImageIO.read(new File(fileName));
+            tileW = this.tex.getWidth(this) / 4;
+            tileH = this.tex.getHeight(this) / 4;
+        } catch (IOException ex)
         {
             ex.printStackTrace(System.err);
         }
-        
-        addMouseListener(new MouseAdapter() {
 
+        addMouseListener(new MouseAdapter()
+        {
             @Override
             public void mouseClicked(MouseEvent e)
             {
                 seed = System.currentTimeMillis();
                 repaint();
             }
-            
         });
     }
 
@@ -90,80 +105,140 @@ public class WangTiling extends JPanel
     public void paint(Graphics g)
     {
         random = new Random(seed);
-        tiles = new int[getHeight()/h+1][getWidth()/w+1];
-        for (int i = 0; i < tiles.length; i++)
-            for (int j = 0; j < tiles[i].length; j++)
-                tiles[i][j] = -1;
+        tiles = new int[getHeight() / tileH + 1][getWidth() / tileW + 1];
         for (int i = 0; i < tiles.length; i++)
         {
             for (int j = 0; j < tiles[i].length; j++)
             {
-                int x = calc(i,j);
+                tiles[i][j] = -1;
+            }
+        }
+        for (int i = 0; i < tiles.length; i++)
+        {
+            for (int j = 0; j < tiles[i].length; j++)
+            {
+                int x = wang(i, j);
                 tiles[i][j] = x;
-                int[] p = pnt(x);
-                g.drawImage(test, j*w, i*h, j*w+w, i*h+h, p[0]*w, p[1]*h, p[0]*w+w, p[1]*h+h, this);
+                int[] p = indexToPoint(x);
+                g.drawImage(tex, j * tileW, i * tileH, j * tileW + tileW, i * tileH + tileH, p[0] * tileW, p[1] * tileH, p[0] * tileW + tileW, p[1] * tileH + tileH, this);
                 //g.drawRect(j*w, i*h, w, h);
             }
         }
     }
-    
-    public int[] pnt(int x)
+
+    public int[] indexToPoint(int x)
     {
-        return new int[]{x % 4, x / 4};
+        return new int[]
+        {
+            x % 4, x / 4
+        };
     }
-    
-    public int calc(int i, int j)
+
+    /**
+     * Calculates the Wang tile for the position.
+     *
+     * @param i
+     * @param j
+     * @return
+     */
+    public int wang(int i, int j)
     {
-        int z;
+        int bits;
         do
         {
-            z = 0;
+            bits = 0;
+            // build integer out of bits that represent border colour
             for (int d = 0; d < 4; d++)
             {
-                z |= g(i,j,d) << (3-d);
+                bits |= getBorder(i, j, d) << (3 - d);
             }
-        }
-        while (bad(i,j,f[z]));
-        return f[z];
+        } while (sameAsNeighbour(i, j, hash[bits]));
+        return hash[bits];
     }
-    
-    public boolean bad(int i, int j, int x)
+
+    /**
+     * Checks if the given tile value is the same as it's neighbours and
+     * diagonals. This is for avoiding repeats.
+     *
+     * @param i
+     * @param j
+     * @param x value of tile
+     * @return
+     */
+    public boolean sameAsNeighbour(int i, int j, int x)
     {
         for (int d = 0; d < 4; d++)
         {
-            if (get(i,j,dir[d]) == x) return true;
-            if (get(i,j,diag[d]) == x) return true;
+            if (get(i, j, directions[d]) == x)
+            {
+                return true;
+            }
+            if (get(i, j, diag[d]) == x)
+            {
+                return true;
+            }
         }
         return false;
     }
-    
+
+    /**
+     * Wraps the index a around length b.
+     *
+     * @param a
+     * @param b
+     * @return
+     */
     public int wrap(int a, int b)
     {
-        if (a >= b) return a % b;
-        if (a < 0) return a + b;
+        if (a >= b)
+        {
+            return a % b;
+        }
+        if (a < 0)
+        {
+            return a + b;
+        }
         return a;
     }
-    
+
+    /**
+     * Gets the value of the tile relative to the given indices.
+     *
+     * @param i
+     * @param j
+     * @param dir the relative direction
+     * @return
+     */
     public int get(int i, int j, int[] dir)
     {
         try
         {
-            return tiles[i+dir[0]][j+dir[1]];
-        }
-        catch (ArrayIndexOutOfBoundsException ex)
+            return tiles[i + dir[0]][j + dir[1]];
+        } catch (ArrayIndexOutOfBoundsException ex)
         {
             return -1;
         }
     }
-    
-    public int g(int i, int j, int d)
+
+    /**
+     * Gets the colour of the given edge.
+     *
+     * @param i
+     * @param j
+     * @param dir
+     * @return
+     */
+    public int getBorder(int i, int j, int dir)
     {
-        int x = get(i,j,dir[d]);
-        if (x < 0) return p();
-        return border[d][x];
+        int x = get(i, j, directions[dir]);
+        if (x < 0)
+        {
+            return random();
+        }
+        return borders[dir][x];
     }
-    
-    public int p()
+
+    public int random()
     {
         return random.nextInt(2);
     }
