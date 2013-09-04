@@ -63,7 +63,7 @@ public class WangTiling extends JPanel
     @Override
     public void paint(Graphics g)
     {
-        random = new Random();
+        random = new Random(seed);
         tiles = new int[getHeight()/h+1][getWidth()/w+1];
         for (int i = 0; i < tiles.length; i++)
             for (int j = 0; j < tiles[i].length; j++)
