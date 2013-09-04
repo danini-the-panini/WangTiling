@@ -1,7 +1,19 @@
 package wangtiling;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.RenderingHints;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetAdapter;
+import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -17,8 +29,10 @@ import javax.swing.JPanel;
  */
 public class WangTiling extends JPanel
 {
+    public static final Font FONT = new Font("Segoe UI", Font.PLAIN, 24);
+    public static final String MESSAGE = "Drag an image here";
 
-    Image tex;
+    Image tex = null;
     int tileW, tileH;
     long seed;
     int[][] borders =
@@ -77,18 +91,9 @@ public class WangTiling extends JPanel
     int[][] tiles;
     Random random;
 
-    public WangTiling(String fileName)
+    public WangTiling()
     {
         seed = System.currentTimeMillis();
-        try
-        {
-            this.tex = ImageIO.read(new File(fileName));
-            tileW = this.tex.getWidth(this) / 4;
-            tileH = this.tex.getHeight(this) / 4;
-        } catch (IOException ex)
-        {
-            ex.printStackTrace(System.err);
-        }
 
         addMouseListener(new MouseAdapter()
         {
@@ -99,11 +104,72 @@ public class WangTiling extends JPanel
                 repaint();
             }
         });
+
+        DropTarget dt = new DropTarget(this, new DropTargetAdapter()
+        {
+            @Override
+            public void drop(DropTargetDropEvent dtde)
+            {
+                try
+                {
+                    dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
+                    Transferable t = dtde.getTransferable();
+                    if (t.isDataFlavorSupported(DataFlavor.javaFileListFlavor))
+                    {
+                        String flist = t.getTransferData(DataFlavor.javaFileListFlavor).toString();
+                        if (flist == null || flist.isEmpty())
+                            return;
+                        flist = flist.substring(1, flist.length()-1);
+                        String[] farray = flist.split(", ");
+                        if (farray.length < 1)
+                            return;
+                        String lastFile = farray[farray.length-1];
+                        loadImage(lastFile);
+                        repaint();
+                    }
+                } catch (UnsupportedFlavorException | IOException ex)
+                {
+                    ex.printStackTrace(System.err);
+                }
+            }
+        });
+        dt.setActive(true);
+        setDropTarget(dt);
     }
 
     @Override
-    public void paint(Graphics g)
+    public void paint(Graphics gfx)
     {
+        Graphics2D g = (Graphics2D) gfx;
+        
+        g.setBackground(Color.WHITE);
+        g.clearRect(0, 0, getWidth(), getHeight());
+        
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        
+        g.setFont(FONT);
+        g.setColor(Color.GRAY);
+        
+        if (tex == null)
+        {
+            int stringWidth = g.getFontMetrics().stringWidth(MESSAGE);
+            int stringHeight =  g.getFontMetrics().getHeight();
+            
+            int boxWidth = stringWidth + 50;
+            int boxHeight = stringHeight + 50;
+            
+            g.drawString(MESSAGE,
+                    getWidth()/2 - stringWidth/2,
+                    getHeight()/2 -stringHeight/2 + 20);
+            
+            g.setStroke(new BasicStroke(2, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 0, new float[]{5,5}, 1));
+            
+            g.drawRoundRect(getWidth()/2 - boxWidth/2,
+                    getHeight()/2 -boxHeight/2, boxWidth, boxHeight, 50, 50);
+            
+            return;
+        }
+        
         random = new Random(seed);
         tiles = new int[getHeight() / tileH + 1][getWidth() / tileW + 1];
         for (int i = 0; i < tiles.length; i++)
@@ -249,9 +315,22 @@ public class WangTiling extends JPanel
     public static void main(String[] args)
     {
         JFrame frame = new JFrame("Wang!");
-        frame.add(new WangTiling(args.length > 0 ? args[0] : "test.png"));
+        frame.add(new WangTiling());
         frame.setSize(500, 500);
         frame.setVisible(true);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    }
+
+    private void loadImage(String fileName) throws IOException
+    {
+        Image newTex = ImageIO.read(new File(fileName));
+        if (newTex == null)
+        {
+            System.err.println("That is not an image!");
+            return;
+        }
+        tex = newTex;
+        tileW = tex.getWidth(this) / 4;
+        tileH = tex.getHeight(this) / 4;
     }
 }
