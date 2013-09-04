@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package wangtiling;
 
 import java.awt.Graphics;
@@ -133,7 +129,7 @@ public class WangTiling extends JPanel
     public static void main(String[] args)
     {
         JFrame frame = new JFrame("Wang!");
-        frame.add(new WangTiling(args.length > 1 ? args[0] : "test.png"));
+        frame.add(new WangTiling(args.length > 0 ? args[0] : "test.png"));
         frame.setSize(500, 500);
         frame.setVisible(true);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
