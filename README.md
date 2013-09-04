@@ -6,7 +6,15 @@ This is an implementation of "Wang Tiling" in Java 2D.
 Usage
 -----
 
-Run it (ant run, or through netbeans) abnd just drag an image file into the window!
+Run it (ant run, or through netbeans) and just drag an image file into the window, it's that easy!
+
+Clicking in the window re-tiles (or randomises) the texture.
+
+You will also find the following example tile-based textures:
+
+  * test.png
+  * seams.png
+  * poe.png (this is from the game Path of Exile, see link in Notes)
 
 Notes
 -----
