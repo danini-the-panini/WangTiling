@@ -16,6 +16,7 @@ import java.awt.dnd.DropTargetAdapter;
 import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.io.IOException;
@@ -101,6 +102,9 @@ public class WangTiling extends JPanel
     };
     int[][] tiles;
     Random random;
+    
+    int mx, my;
+    int ox, oy;
 
     public WangTiling()
     {
@@ -112,6 +116,26 @@ public class WangTiling extends JPanel
             public void mouseClicked(MouseEvent e)
             {
                 seamsVisible = !seamsVisible;
+                repaint();
+            }
+            
+            @Override
+            public void mousePressed(MouseEvent e)
+            {
+                mx = e.getX();
+                my = e.getY();
+            }
+        });
+        
+        addMouseMotionListener(new MouseAdapter()
+        {
+            @Override
+            public void mouseDragged(MouseEvent e)
+            {
+                ox += (e.getX() - mx);
+                oy += (e.getY() - my);
+                mx = e.getX();
+                my = e.getY();
                 repaint();
             }
         });
@@ -159,6 +183,9 @@ public class WangTiling extends JPanel
         g.setRenderingHint(
             RenderingHints.KEY_ANTIALIASING,
             RenderingHints.VALUE_ANTIALIAS_ON);
+            
+        AffineTransform origT = g.getTransform();
+        g.transform(AffineTransform.getTranslateInstance(ox,oy));
         
         // draw drop text if no texture is loaded
         g.setFont(FONT);
@@ -223,6 +250,8 @@ public class WangTiling extends JPanel
                 }
             }
         }
+        
+        g.setTransform(origT);
     }
 
     public int[] indexToPoint(int x)
