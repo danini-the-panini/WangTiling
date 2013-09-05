@@ -107,7 +107,6 @@ public class WangTiling extends JPanel
     int TILES_X = 16, TILES_Y = 16;
     int[][] hseams = new int[TILES_Y][TILES_Y];
     int[][] vseams = new int[TILES_Y][TILES_Y];
-    int[][] tiles = new int[TILES_Y][TILES_Y];
     Random random;
     
     int mx, my;
@@ -260,25 +259,24 @@ public class WangTiling extends JPanel
     public void wangAll()
     {
         random = new Random(seed);
-        for (int i = 0; i < tiles.length; i++)
+        for (int i = 0; i < TILES_Y; i++)
         {
-            for (int j = 0; j < tiles[i].length; j++)
+            for (int j = 0; j < TILES_X; j++)
             {
                 hseams[i][j] = random.nextInt(2);
                 vseams[i][j] = random.nextInt(2);
             }
         }
-        // TODO: fix repeats
-        int b[] = new int[4];
-        for (int i = 0; i < tiles.length; i++)
+        for (int i = 0; i < TILES_Y; i++)
         {
-            for (int j = 0; j < tiles[i].length; j++)
+            for (int j = 0; j < TILES_X; j++)
             {
-                b[UP] = hseams[i][j];
-                b[DOWN] = hseams[(i+1)%TILES_Y][j];
-                b[LEFT] = vseams[i][j];
-                b[RIGHT] = vseams[i][(j+1)%TILES_X];
-                tiles[i][j] = hash[unbit(b)];
+                boolean[] sim = getSimilar(i, j);
+                
+                if (sim[UP]) hseams[i][j] = 1-hseams[i][j];
+                if (sim[DOWN]) hseams[(i+1)%TILES_Y][j] = 1-hseams[(i+1)%TILES_Y][j];
+                if (sim[LEFT]) vseams[i][j] = 1-vseams[i][j];
+                if (sim[RIGHT]) vseams[i][(j+1)%TILES_X] = 1-vseams[i][(j+1)%TILES_X];
             }
         }
     }
@@ -307,15 +305,16 @@ public class WangTiling extends JPanel
         return bits;
     }
     
-    public int getSimilar(int i, int j)
+    public boolean[] getSimilar(int i, int j)
     {
+        boolean[] sim = {false,false,false,false};
         int x = getWrap(i,j);
         for (int d = 0; d < 4; d++)
         {
-            if (get(i, j, directions[d]) == x)
-                return d;
+            if (getDir(i, j, directions[d]) == x)
+                sim[d] = true;
         }
-        return -1;
+        return sim;
     }
 
     /**
@@ -343,14 +342,24 @@ public class WangTiling extends JPanel
      * @param dir the relative direction
      * @return
      */
-    public int get(int i, int j, int[] dir)
+    public int getDir(int i, int j, int[] dir)
     {
         return getWrap(i + dir[0],j + dir[1]);
     }
     
     public int getWrap(int i, int j)
     {
-        return tiles[wrap(i,tiles.length)][wrap(j,tiles[0].length)];
+        return getWang(wrap(i,TILES_Y),wrap(j,TILES_X));
+    }
+    
+    public int getWang(int i, int j)
+    {
+        int[] b = new int[4];
+        b[UP] = hseams[i][j];
+        b[DOWN] = hseams[(i+1)%TILES_Y][j];
+        b[LEFT] = vseams[i][j];
+        b[RIGHT] = vseams[i][(j+1)%TILES_X];
+        return hash[unbit(b)];
     }
 
     /**
@@ -363,7 +372,7 @@ public class WangTiling extends JPanel
      */
     public int getBorder(int i, int j, int dir)
     {
-        int x = get(i, j, directions[dir]);
+        int x = getDir(i, j, directions[dir]);
         if (x < 0)
         {
             return random();
