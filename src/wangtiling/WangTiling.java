@@ -85,7 +85,7 @@ public class WangTiling extends JPanel
             0, 1
         }
     };
-    int[][] diag =
+    int[][] diagonals =
     {
         {
             -1, -1
@@ -100,8 +100,14 @@ public class WangTiling extends JPanel
             1, -1
         }
     };
-    int TILES_X = 64, TILES_Y = 64;
-    int[][] tiles = new int[TILES_X][TILES_Y];
+    int[] opp =
+    {
+        1, 0, 3, 2
+    };
+    int TILES_X = 16, TILES_Y = 16;
+    int[][] hseams = new int[TILES_Y][TILES_Y];
+    int[][] vseams = new int[TILES_Y][TILES_Y];
+    int[][] tiles = new int[TILES_Y][TILES_Y];
     Random random;
     
     int mx, my;
@@ -258,14 +264,21 @@ public class WangTiling extends JPanel
         {
             for (int j = 0; j < tiles[i].length; j++)
             {
-                tiles[i][j] = -1;
+                hseams[i][j] = random.nextInt(2);
+                vseams[i][j] = random.nextInt(2);
             }
         }
+        // TODO: fix repeats
+        int b[] = new int[4];
         for (int i = 0; i < tiles.length; i++)
         {
             for (int j = 0; j < tiles[i].length; j++)
             {
-                tiles[i][j] = wang(i, j);
+                b[UP] = hseams[i][j];
+                b[DOWN] = hseams[(i+1)%TILES_Y][j];
+                b[LEFT] = vseams[i][j];
+                b[RIGHT] = vseams[i][(j+1)%TILES_X];
+                tiles[i][j] = hash[unbit(b)];
             }
         }
     }
@@ -277,52 +290,32 @@ public class WangTiling extends JPanel
             x % 4, x / 4
         };
     }
-
+    
     /**
-     * Calculates the Wang tile for the position.
+     * Builds integer out of bits.
      *
-     * @param i
-     * @param j
-     * @return
+     * @param b the bits.
+     * @return the bits concatenated.
      */
-    public int wang(int i, int j)
+    public int unbit(int[] b)
     {
-        int bits;
-//        do
-//        {
-            bits = 0;
-            // build integer out of bits that represent border colour
-            for (int d = 0; d < 4; d++)
-            {
-                bits |= getBorder(i, j, d) << (3 - d);
-            }
-//        } while (sameAsNeighbour(i, j, hash[bits]));
-        return hash[bits];
+        int bits = 0;
+        for (int i = 0; i < b.length; i++)
+        {
+            bits |= b[i] << (b.length - 1 - i);
+        }
+        return bits;
     }
-
-    /**
-     * Checks if the given tile value is the same as it's neighbours and
-     * diagonals. This is for avoiding repeats.
-     *
-     * @param i
-     * @param j
-     * @param x value of tile
-     * @return
-     */
-    public boolean sameAsNeighbour(int i, int j, int x)
+    
+    public int getSimilar(int i, int j)
     {
+        int x = getWrap(i,j);
         for (int d = 0; d < 4; d++)
         {
             if (get(i, j, directions[d]) == x)
-            {
-                return true;
-            }
-            if (get(i, j, diag[d]) == x)
-            {
-                return true;
-            }
+                return d;
         }
-        return false;
+        return -1;
     }
 
     /**
