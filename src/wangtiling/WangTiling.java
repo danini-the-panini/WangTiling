@@ -104,7 +104,7 @@ public class WangTiling extends JPanel
     {
         1, 0, 3, 2
     };
-    int TILES_X = 16, TILES_Y = 16;
+    int TILES_X = 64, TILES_Y = 64;
     int[][] hseams = new int[TILES_Y][TILES_Y];
     int[][] vseams = new int[TILES_Y][TILES_Y];
     Random random;
