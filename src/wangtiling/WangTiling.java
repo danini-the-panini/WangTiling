@@ -189,9 +189,6 @@ public class WangTiling extends JPanel
         g.setRenderingHint(
             RenderingHints.KEY_ANTIALIASING,
             RenderingHints.VALUE_ANTIALIAS_ON);
-            
-        AffineTransform origT = g.getTransform();
-        g.transform(AffineTransform.getTranslateInstance(ox,oy));
         
         // draw drop text if no texture is loaded
         g.setFont(FONT);
@@ -221,6 +218,9 @@ public class WangTiling extends JPanel
         g.setRenderingHint( RenderingHints.KEY_ANTIALIASING,
             RenderingHints.VALUE_ANTIALIAS_OFF);
         g.setStroke(new BasicStroke(seamWidth));
+        
+        AffineTransform origT = g.getTransform();
+        g.transform(AffineTransform.getTranslateInstance(ox,oy));
         
         int er = getHeight()/tileH+3;
         int ec = getWidth()/tileW+3;
