@@ -100,7 +100,8 @@ public class WangTiling extends JPanel
             1, -1
         }
     };
-    int[][] tiles;
+    int TILES_X = 64, TILES_Y = 64;
+    int[][] tiles = new int[TILES_X][TILES_Y];
     Random random;
     
     int mx, my;
@@ -216,21 +217,17 @@ public class WangTiling extends JPanel
             RenderingHints.VALUE_ANTIALIAS_OFF);
         g.setStroke(new BasicStroke(seamWidth));
         
-        random = new Random(seed);
-        tiles = new int[getHeight() / tileH + 1][getWidth() / tileW + 1];
-        for (int i = 0; i < tiles.length; i++)
+        int er = getHeight()/tileH+3;
+        int ec = getWidth()/tileW+3;
+        int ei = -oy/tileH-1;
+        int ej = -ox/tileW-1;
+        for (int row = 0; row < er; row++)
         {
-            for (int j = 0; j < tiles[i].length; j++)
+            for (int col = 0; col < ec; col++)
             {
-                tiles[i][j] = -1;
-            }
-        }
-        for (int i = 0; i < tiles.length; i++)
-        {
-            for (int j = 0; j < tiles[i].length; j++)
-            {
-                int x = wang(i, j);
-                tiles[i][j] = x;
+                int i = ei+row;
+                int j = ej+col;
+                int x = getWrap(i, j);
                 int[] p = indexToPoint(x);
                 int rx = j * tileW, ry = i * tileH;
                 g.drawImage(tex, rx, ry, rx + tileW, ry + tileH, p[0] * tileW, p[1] * tileH, p[0] * tileW + tileW, p[1] * tileH + tileH, this);
@@ -253,6 +250,25 @@ public class WangTiling extends JPanel
         
         g.setTransform(origT);
     }
+    
+    public void wangAll()
+    {
+        random = new Random(seed);
+        for (int i = 0; i < tiles.length; i++)
+        {
+            for (int j = 0; j < tiles[i].length; j++)
+            {
+                tiles[i][j] = -1;
+            }
+        }
+        for (int i = 0; i < tiles.length; i++)
+        {
+            for (int j = 0; j < tiles[i].length; j++)
+            {
+                tiles[i][j] = wang(i, j);
+            }
+        }
+    }
 
     public int[] indexToPoint(int x)
     {
@@ -272,15 +288,15 @@ public class WangTiling extends JPanel
     public int wang(int i, int j)
     {
         int bits;
-        do
-        {
+//        do
+//        {
             bits = 0;
             // build integer out of bits that represent border colour
             for (int d = 0; d < 4; d++)
             {
                 bits |= getBorder(i, j, d) << (3 - d);
             }
-        } while (sameAsNeighbour(i, j, hash[bits]));
+//        } while (sameAsNeighbour(i, j, hash[bits]));
         return hash[bits];
     }
 
@@ -318,15 +334,12 @@ public class WangTiling extends JPanel
      */
     public int wrap(int a, int b)
     {
-        if (a >= b)
+        int x = a % b;
+        if (x < 0)
         {
-            return a % b;
+            x += b;
         }
-        if (a < 0)
-        {
-            return a + b;
-        }
-        return a;
+        return x;
     }
 
     /**
@@ -339,13 +352,12 @@ public class WangTiling extends JPanel
      */
     public int get(int i, int j, int[] dir)
     {
-        try
-        {
-            return tiles[i + dir[0]][j + dir[1]];
-        } catch (ArrayIndexOutOfBoundsException ex)
-        {
-            return -1;
-        }
+        return getWrap(i + dir[0],j + dir[1]);
+    }
+    
+    public int getWrap(int i, int j)
+    {
+        return tiles[wrap(i,tiles.length)][wrap(j,tiles[0].length)];
     }
 
     /**
@@ -395,6 +407,9 @@ public class WangTiling extends JPanel
         seed = System.currentTimeMillis();
         tileW = tex.getWidth(this) / 4;
         tileH = tex.getHeight(this) / 4;
+        ox = -(tileW * TILES_X - getWidth()) / 2;
+        oy = -(tileH * TILES_Y - getHeight()) / 2;
+        wangAll();
     }
 
     private void error(String message)
