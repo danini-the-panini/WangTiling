@@ -6,6 +6,9 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.Shape;
+import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
 import java.awt.RenderingHints;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -18,6 +21,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
+import java.awt.font.FontRenderContext;
+import java.awt.font.TextLayout;
 import java.io.File;
 import java.io.IOException;
 import java.util.Random;
@@ -36,7 +41,7 @@ public class WangTiling extends JPanel
     public static final String MESSAGE = "Drag an image here";
     public static final int DRAG_BOX_SIZE = 50;
 
-    Image tex = null;
+    Image tex = null, seamTex = null;
     int tileW, tileH;
     long seed;
     int[][] borders =
@@ -235,25 +240,19 @@ public class WangTiling extends JPanel
                 int x = getWrap(i, j);
                 int[] p = indexToPoint(x);
                 int rx = j * tileW, ry = i * tileH;
-                g.drawImage(tex, rx, ry, rx + tileW, ry + tileH, p[0] * tileW, p[1] * tileH, p[0] * tileW + tileW, p[1] * tileH + tileH, this);
-                
-                if (seamsVisible)
-                {
-                    for (int d = 0; d < 4; d++)
-                    {
-                        Color c = borders[d][x] == 0 ? Color.RED : Color.BLUE;
-                        g.setColor(c);
-                        g.drawLine(
-                            (int)(rx + seams[d][0]*tileW),
-                            (int)(ry + seams[d][1]*tileH),
-                            (int)(rx + seams[d][2]*tileW),
-                            (int)(ry + seams[d][3]*tileH));
-                    }
-                }
+                drawTile(g, seamsVisible ? seamTex : tex,
+                    rx, ry, p[0], p[1]);
             }
         }
         
         g.setTransform(origT);
+    }
+    
+    public void drawTile(Graphics2D g, Image img, int rx, int ry,
+        int px, int py)
+    {
+        g.drawImage(img, rx, ry, rx + tileW, ry + tileH, px * tileW,
+            py * tileH, px * tileW + tileW, py * tileH + tileH, this);
     }
     
     public void wangAll()
@@ -411,7 +410,79 @@ public class WangTiling extends JPanel
         tileH = tex.getHeight(this) / 4;
         ox = -(tileW * TILES_X - getWidth()) / 2;
         oy = -(tileH * TILES_Y - getHeight()) / 2;
+        seamTex = createSeamTex();
         wangAll();
+    }
+    
+    private Image createSeamTex()
+    {
+        int w = tileW*4;
+        int h = tileH*4;
+        BufferedImage img = new BufferedImage(w, h,
+            BufferedImage.OPAQUE);
+            
+        Graphics2D g = img.createGraphics();
+        try
+        {
+            g.setRenderingHint(
+                RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON);
+            
+            AffineTransform origT = g.getTransform();
+        
+            g.drawImage(tex,0,0,this);
+            for (int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    int rx = tileW * j;
+                    int ry = tileH * i;
+                    int x = i*4+j;
+                    for (int d = 0; d < 4; d++)
+                    {
+                        Color c = borders[d][x] == 0 ? Color.RED : Color.BLUE;
+                        g.setColor(c);
+                        g.setStroke(new BasicStroke(3));
+                        g.drawLine(
+                            (int)(rx + seams[d][0]*tileW),
+                            (int)(ry + seams[d][1]*tileH),
+                            (int)(rx + seams[d][2]*tileW),
+                            (int)(ry + seams[d][3]*tileH));
+                    }
+                }
+            }
+            for (int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    int x = i*4+j;
+                    int rx = tileW * j;
+                    int ry = tileH * i;
+                    FontRenderContext frc = g.getFontRenderContext();
+                    Font f = new Font("Segoe UI", Font.PLAIN, 14);
+                    String s = new String(x+"");
+                    TextLayout textTl = new TextLayout(s, f, frc);
+                    Shape outline = textTl.getOutline(null);
+                    Rectangle outlineBounds = outline.getBounds();
+                    AffineTransform transform = g.getTransform();
+                    transform.translate(
+                        rx+tileW/2-outlineBounds.width/2,
+                        ry + tileH/2 + outlineBounds.height/2);
+                    g.transform(transform);
+                    g.setColor(Color.BLACK);
+                    g.setStroke(new BasicStroke(2));
+                    g.draw(outline);
+                    g.setColor(Color.WHITE);
+                    g.fill(outline);
+                    g.setTransform(origT);
+                }
+            }
+        } finally
+        {
+            g.dispose();
+        }
+        
+        return img;
     }
 
     private void error(String message)
