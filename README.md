@@ -8,7 +8,7 @@ Usage
 
 Run it (ant run, or through netbeans) and just drag an image file into the window, it's that easy!
 
-Clicking on the window toggles visibility of coloured seams.
+Clicking on the window toggles visibility of coloured seams and tile indices. Dragging around inside the window pans the view.
 
 You will also find the following example tile-based textures:
 
@@ -24,5 +24,5 @@ This implementation only supports two colours per axis and therefore only 16-til
 Future Features
 ---------------
 
-  * Pan & Zoom
+  * Zoom
   * Export index map (as LUT texture or text)
